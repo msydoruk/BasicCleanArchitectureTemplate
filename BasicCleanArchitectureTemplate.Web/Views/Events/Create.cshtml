@@ -1,0 +1,184 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model BasicCleanArchitectureTemplate.Web.ViewModels.EventViewModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Event</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Category" class="control-label"></label>
+                <input asp-for="Category" class="form-control" />
+                <span asp-validation-for="Category" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Place" class="control-label"></label>
+                <input asp-for="Place" class="form-control" />
+                <span asp-validation-for="Place" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="StartDate" class="control-label"></label>
+                <input asp-for="StartDate" class="form-control" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="AdditionalInfo" class="control-label"></label>
+                <input asp-for="AdditionalInfo" class="form-control" />
+                <span asp-validation-for="AdditionalInfo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ImageUrl" class="control-label"></label>
+                <input asp-for="ImageUrl" class="form-control" />
+                <span asp-validation-for="ImageUrl" class="text-danger"></span>
+            </div>
+            
+            <!-- Checkbox for recurrence setting -->
+            <div class="form-group">
+                <input id="recurrenceCheckbox" type="checkbox" />
+                <input type="hidden" id="hasRecurrenceHidden" name="HasRecurrence" value="false" />
+                <label for="recurrenceCheckbox">Has Recurrence?</label>
+            </div>
+
+            <div id="recurrenceFields" style="@(Model != null && Model.RecurrenceSetting != null && Model.RecurrenceSetting.Id is not null ? "" : "display:none;")">
+                <!-- Recurrence Setting Fields -->
+                <h4>Recurrence Setting</h4>
+                <hr />
+                <input type="hidden" asp-for="RecurrenceSetting.Id" />
+                <div class="form-group">
+                    <label asp-for="RecurrenceSetting.Type" class="control-label"></label>
+                    <select asp-for="RecurrenceSetting.Type" class="form-control">
+                        @foreach (var type in Enum.GetValues(typeof(BasicCleanArchitectureTemplate.Core.Models.RecurrenceType)))
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                    <span asp-validation-for="RecurrenceSetting.Type" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="RecurrenceSetting.Interval" class="control-label"></label>
+                    <input asp-for="RecurrenceSetting.Interval" class="form-control" />
+                    <span asp-validation-for="RecurrenceSetting.Interval" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="RecurrenceSetting.EndDate" class="control-label"></label>
+                    <input asp-for="RecurrenceSetting.EndDate" class="form-control" />
+                    <span asp-validation-for="RecurrenceSetting.EndDate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group" id="recurrenceTypeCustomFields" style="display:none;">
+                    <label asp-for="RecurrenceSetting.PeriodType" class="control-label"></label>
+                    <select asp-for="RecurrenceSetting.PeriodType" class="form-control">
+                        <option value="Week">Week</option>
+                        <option value="Month">Month</option>
+                    </select>
+                    <span asp-validation-for="RecurrenceSetting.PeriodType" class="text-danger"></span>
+                </div>
+                <div class="form-group" id="recurrencePositionFields" style="display:none;">
+                    <label asp-for="RecurrenceSetting.OccurrencePosition" class="control-label"></label>
+                    <select asp-for="RecurrenceSetting.OccurrencePosition" class="form-control">
+                        <option value="First">First</option>
+                        <option value="Last">Last</option>
+                    </select>
+                    <span asp-validation-for="RecurrenceSetting.OccurrencePosition" class="text-danger"></span>
+                </div>
+                <div class="form-group" id="dayOfWeekFields" style="display:none;">
+                    <label asp-for="RecurrenceSetting.DayOfWeeks" class="control-label">Day of Week</label>
+                    @foreach (var day in Enum.GetValues(typeof(DayOfWeek)))
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="RecurrenceSetting.DayOfWeeks"
+                                   value="@day"
+                                   id="day-@day"
+                            @(Model != null && Model.RecurrenceSetting?.DayOfWeeks?.Contains((DayOfWeek)day) == true ? "checked='checked'" : "") />
+                            <label class="form-check-label" for="day-@day">@day.ToString()</label>
+                        </div>
+                    }
+                </div>
+
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.getElementById("recurrenceCheckbox").addEventListener("change", function() {
+            const recurrenceFields = document.getElementById("recurrenceFields");
+            const hasRecurrenceHidden = document.getElementById("hasRecurrenceHidden");
+
+            if (this.checked) {
+                recurrenceFields.style.display = "block";
+                hasRecurrenceHidden.value = "true";
+            } else {
+                recurrenceFields.style.display = "none";
+                hasRecurrenceHidden.value = "false";
+
+                document.querySelector("input[asp-for='RecurrenceSetting.Interval']").value = "";
+                document.querySelector("input[asp-for='RecurrenceSetting.EndDate']").value = "";
+                document.querySelector("select[asp-for='RecurrenceSetting.Type']").selectedIndex = -1;
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var recurrenceTypeSelect = document.querySelector("select[name='RecurrenceSetting.Type']");
+            var periodTypeSelect = document.querySelector("select[name='RecurrenceSetting.PeriodType']");
+            var recurrenceTypeCustomFields = document.getElementById("recurrenceTypeCustomFields");
+            var recurrencePositionFields = document.getElementById("recurrencePositionFields");
+            var dayOfWeekFields = document.getElementById("dayOfWeekFields");
+
+            function updateDisplay() {
+                var isCustom = recurrenceTypeSelect.value === "Custom";
+                var isMonth = periodTypeSelect.value === "Month";
+
+                recurrenceTypeCustomFields.style.display = isCustom ? "block" : "none";
+                // Show occurrence position fields only if RecurrenceType is Custom and PeriodType is Month
+                recurrencePositionFields.style.display = isCustom && isMonth ? "block" : "none";
+                dayOfWeekFields.style.display = isCustom ? "block" : "none";
+            }
+
+            // Add change event listeners
+            if (recurrenceTypeSelect) {
+                recurrenceTypeSelect.addEventListener("change", updateDisplay);
+            }
+
+            if (periodTypeSelect) {
+                periodTypeSelect.addEventListener("change", updateDisplay);
+            }
+
+            // Initialize display on page load
+            updateDisplay();
+        });
+
+    </script>
+}

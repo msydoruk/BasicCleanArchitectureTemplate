@@ -1,0 +1,103 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Events</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<label for="categoryFilter">Category:</label>
+<input type="text" id="categoryFilter">
+
+<label for="placeFilter">Place:</label>
+<input type="text" id="placeFilter">
+
+<button id="applyFilters">Apply filters</button>
+
+<div id='calendar'></div>
+
+<script>
+    function formatToServerDate(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    function getMonthStartEndDates() {
+        let now = new Date();
+        let startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        let endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return {
+            start: startOfMonth,
+            end: endOfMonth
+        };
+    }
+
+    let defaultMonthDates = getMonthStartEndDates();
+
+    let globalStartDate = formatToServerDate(defaultMonthDates.start);
+    let globalEndDate = formatToServerDate(defaultMonthDates.end);
+
+    var calendar;
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            initialView: 'dayGridMonth',
+            navLinks: true,
+            editable: true,
+            selectable: true,
+            dayMaxEvents: true,
+            eventContent: function(arg) {
+                var titleEl = document.createElement('a');
+                titleEl.style.color = 'black'; // Set the link color to black
+                titleEl.innerHTML = arg.event.title + " (" + arg.event.extendedProps.category + ")";
+                titleEl.href = '@Url.Action("Details", "Events")?id=' + arg.event.id;
+                return { html: titleEl.outerHTML };
+            },
+            datesSet: function(dateInfo) {
+                globalStartDate = formatToServerDate(dateInfo.start);
+                globalEndDate = formatToServerDate(dateInfo.end);
+                
+                calendar.refetchEvents();
+            },
+            eventSources: [{
+                url: '@Url.Action("GetCalendarEvents", "Events")',
+                method: 'GET',
+                extraParams: function() {
+                    return {
+                        startDate: globalStartDate,
+                        endDate: globalEndDate,
+                        category: document.getElementById("categoryFilter").value,
+                        place: document.getElementById("placeFilter").value
+                    };
+                },
+                failure: function() {
+                    alert('There was an error while fetching events!');
+                },
+                eventDataTransform: function(eventData) {
+                    return {
+                        id: eventData.eventInstance.id,
+                        title: eventData.eventInstance.name,
+                        start: eventData.occurrenceDate,
+                        category: eventData.eventInstance.category
+                    };
+                }
+            }]
+        });
+
+        calendar.render();
+    });
+
+    document.getElementById("applyFilters").addEventListener("click", function() {
+        calendar.refetchEvents();
+    });
+
+</script>
